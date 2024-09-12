@@ -4,15 +4,13 @@ cimport numpy as np
 
 
 DTYPE = np.int
-ctypedef np.int_t DTYPE_t
+ctypedef np.npy_int DTYPE_t
 
-DTYPE2 = np.double
-ctypedef np.double_t DTYPE2_t
+DTYPE64 = np.float64
+ctypedef np.npy_double DTYPE64_t
 
 DTYPE32 = np.float32
-ctypedef np.float32_t DTYPE32_t
-
-
+ctypedef np.npy_float DTYPE32_t
 
 @cython.boundscheck(False)
 def precip(np.ndarray[DTYPE_t, ndim=2] var,
@@ -23,7 +21,7 @@ def precip(np.ndarray[DTYPE_t, ndim=2] var,
     cdef unsigned int jj = var.shape[1]
     cdef Py_ssize_t i, j
     
-    cdef np.ndarray[DTYPE2_t, ndim=1] hist = np.zeros(asize, dtype=DTYPE2)
+    cdef np.ndarray[DTYPE64_t, ndim=1] hist = np.zeros(asize, dtype=DTYPE64)
 
     cdef unsigned int max = 0
     cdef unsigned int iii, jjj
@@ -49,8 +47,8 @@ def joint_precip(np.ndarray[DTYPE_t, ndim=2] var1,
     cdef unsigned int jj = var1.shape[1]
     cdef Py_ssize_t i, j
 
-    cdef np.ndarray[DTYPE2_t, ndim=1] hist1 = np.zeros(asize, dtype=DTYPE2)
-    cdef np.ndarray[DTYPE2_t, ndim=1] hist2 = np.zeros(asize, dtype=DTYPE2)
+    cdef np.ndarray[DTYPE64_t, ndim=1] hist1 = np.zeros(asize, dtype=DTYPE64)
+    cdef np.ndarray[DTYPE64_t, ndim=1] hist2 = np.zeros(asize, dtype=DTYPE64)
 
     cdef unsigned int iii, jjj
 
@@ -96,7 +94,6 @@ def regional_threshold(np.ndarray[DTYPE32_t, ndim=2] qpf,
         quantile = quantile/100.
     
     for i from 0 <= i < ulength by skip:
-        print i
         for j from 0 <= j < vlength by skip:
             valid = 0
             qpftmppts = []

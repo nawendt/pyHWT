@@ -2,21 +2,17 @@ cimport cython
 import numpy as np
 cimport numpy as np
 
-
 DTYPE = np.int
-DTYPE2 = np.double
 DTYPE32 = np.float32
 DTYPE64 = np.float64
-ctypedef np.int_t DTYPE_t
-ctypedef np.double_t DTYPE2_t
-ctypedef np.float32_t DTYPE32_t
-ctypedef np.float64_t DTYPE64_t
+ctypedef np.npy_int DTYPE_t
+ctypedef np.npy_float DTYPE32_t
+ctypedef np.npy_double DTYPE64_t
 
 cdef extern from 'math.h':
     float sinf(float x)
     float cosf(float x)
     float acosf(float x)
-
 
 @cython.boundscheck(False)
 @cython.cdivision(True)
@@ -104,7 +100,6 @@ def geo_grid_data(np.ndarray[DTYPE64_t, ndim=1] ilon,
             rlat[i,j] = mlats[i,j] * PI_4_DEG2RAD
 
     for k in range(kk):
-        # if k % 50 == 0: print k
         min_dist = 99999.0
         for i in range(ii):
             for j in range(jj):
@@ -145,7 +140,6 @@ def grid_data(np.ndarray[DTYPE64_t, ndim=1] xvals,
 
     hdx = dx / 2.0
     for k in range(kk):
-        # if k % 1000 == 0: print k
         min_dist = 99999.0
         for i in range(ii):
             for j in range(jj):
@@ -165,12 +159,12 @@ def grid_data(np.ndarray[DTYPE64_t, ndim=1] xvals,
 
 
 @cython.boundscheck(False)
-def ptype(np.ndarray[DTYPE2_t, ndim=2] rain,
-          np.ndarray[DTYPE2_t, ndim=2] snow,
-          np.ndarray[DTYPE2_t, ndim=2] graupel,
-          np.ndarray[DTYPE2_t, ndim=2] cloud,
-          np.ndarray[DTYPE2_t, ndim=2] ice,
-          np.ndarray[DTYPE2_t, ndim=2] t2m,
+def ptype(np.ndarray[DTYPE64_t, ndim=2] rain,
+          np.ndarray[DTYPE64_t, ndim=2] snow,
+          np.ndarray[DTYPE64_t, ndim=2] graupel,
+          np.ndarray[DTYPE64_t, ndim=2] cloud,
+          np.ndarray[DTYPE64_t, ndim=2] ice,
+          np.ndarray[DTYPE64_t, ndim=2] t2m,
           float minimum_threshold=0.01):
 
     cdef unsigned int ii = cloud.shape[0]
@@ -263,7 +257,6 @@ def layer_sum(np.ndarray[DTYPE32_t, ndim=4] uhfull,
     cdef Py_ssize_t k, j, i, lev
 
     for k in range(kk):
-        if k % 10 == 0: print k
         for j in range(jj):
             for i in range(ii):
                 # Find nearest indices

@@ -9,8 +9,7 @@ cdef extern from 'math.h':
     float fabs(float x)
 
 DTYPE64 = np.float64
-ctypedef np.float64_t DTYPE64_t
-
+ctypedef np.npy_double DTYPE64_t
 
 @cython.boundscheck(False)
 @cython.cdivision(True)
@@ -276,7 +275,6 @@ def uniform(np.ndarray[DTYPE64_t, ndim=2] data,
     for i in range(0, nx*ny):
         partweight[i] = partweight[i] / inradius
 
-    print partweight.sum()
     for j in range(0, vlength):
         for i in range(0, ulength):
             if data[j,i] > 0:

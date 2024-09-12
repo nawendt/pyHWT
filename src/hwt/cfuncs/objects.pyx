@@ -2,18 +2,12 @@ cimport cython
 import numpy as np
 cimport numpy as np
 
-# cython: profile=True
-
-
 DTYPE = np.int
-DTYPE2 = np.double
 DTYPE32 = np.float32
 DTYPE64 = np.float64
-ctypedef np.int_t DTYPE_t
-ctypedef np.double_t DTYPE2_t
-ctypedef np.float32_t DTYPE32_t
-ctypedef np.float64_t DTYPE64_t
-
+ctypedef np.npy_int DTYPE_t
+ctypedef np.npy_float DTYPE32_t
+ctypedef np.npy_double DTYPE64_t
 
 @cython.boundscheck(False)
 @cython.cdivision(True)

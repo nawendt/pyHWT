@@ -3,31 +3,23 @@ import numpy as np
 import sys
 cimport numpy as np
 
-
-
 cdef extern from 'math.h':
     float fabs(float x)
 
-
 DTYPE = np.int
-ctypedef np.int_t DTYPE_t
-
-DTYPE2 = np.double
-ctypedef np.double_t DTYPE2_t
+ctypedef np.npy_int DTYPE_t
 
 DTYPE32 = np.float32
-ctypedef np.float32_t DTYPE32_t
+ctypedef np.npy_float DTYPE32_t
 
 DTYPE64 = np.float64
-ctypedef np.float64_t DTYPE64_t
-
+ctypedef np.npy_double DTYPE64_t
 
 cdef int MISSING = 0
 cdef unsigned int NO_CONVECTION = 0
 cdef unsigned int DECAYED_CONVECTION = 1
 cdef unsigned int ONGOING_CONVECTION = 2
 cdef unsigned int NEW_CONVECTION = 3
-
 
 @cython.boundscheck(False)
 @cython.cdivision(True)

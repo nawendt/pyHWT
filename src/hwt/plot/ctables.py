@@ -1,11 +1,18 @@
-from numpy import array
-import matplotlib as mpl
-LUTSIZE = mpl.rcParams['image.lut']
-del mpl
+# Copyright (c) 2024 Patrick Marsh.
+# Distributed under the terms of the BSD 2-Clause License.
+"""Color tables."""
 
+from functools import reduce
+
+import numpy as np
 import matplotlib.colors as colors
+from matplotlib import rcParams
 
-#These are standard National Weather Service Radar Colortables
+
+LUTSIZE = rcParams['image.lut']
+
+
+# These are standard National Weather Service Radar Colortables
 _NWSRef_data = {
     'blue': [(0.0, 0.92549019607843142, 0.92549019607843142),
              (0.07142857, 0.96470588235294119, 0.96470588235294119),
@@ -361,7 +368,8 @@ _Theodore16_data = {
              (0.40000000000000002, 0.59215686274509804, 0.59215686274509804),
              (0.46666666666666667, 0.82352941176470584, 0.82352941176470584),
              (0.53333333333333333, 0.58431372549019611, 0.58431372549019611),
-             (0.59999999999999998, 0.0039215686274509803, 0.0039215686274509803),
+             (0.59999999999999998, 0.0039215686274509803,
+              0.0039215686274509803),
              (0.66666666666666663, 0.062745098039215685, 0.062745098039215685),
              (0.73333333333333328, 0.17647058823529413, 0.17647058823529413),
              (0.80000000000000004, 0.11372549019607843, 0.11372549019607843),
@@ -1761,34 +1769,35 @@ _Positive_Definite_data = {
               (0.900,0.850,0.850),
               (1.000,0.650,0.650)]}
 
-    
 datad = {}
 for name in list(locals().keys()):
     if name.endswith('_data'):
         newname = name[1:-5]
-        
-        #Put data for colortable into dictionary under new name
-        datad[newname] = locals()[name]
-        
-        #Create colortable from data and place it in local namespace under new name
-        locals()[newname] = colors.LinearSegmentedColormap(newname, locals()[name],
-            LUTSIZE)
 
-#Stolen shamelessly from matplotlib.cm
+        datad[newname] = locals()[name]
+
+        locals()[newname] = colors.LinearSegmentedColormap(newname,
+                                                           locals()[name],
+                                                           LUTSIZE)
+
+
+# Stolen shamelessly from matplotlib.cm
 def get_cmap(name, lut=None):
-    if lut is None: lut = LUTSIZE
-    
-    #If lut is < 0, then return the table with only levels originally defined
+    if lut is None:
+        lut = LUTSIZE
+
+    # If lut is < 0, then return the table with only levels originally defined
     if lut < 0:
         lut = len(datad[name]['red'])
     return colors.LinearSegmentedColormap(name,  datad[name], lut)
 
-#Taken from the matplotlib cookbook
-def cmap_map(function,cmap):
+
+# Taken from the matplotlib cookbook
+def cmap_map(function, cmap):
     """ Applies function (which should operate on vectors of shape 3:
     [r, g, b], on colormap cmap. This routine will break any discontinuous
     points in a colormap.
-    
+
     Example usage:
     light_jet = cmap_map(lambda x: x/2+0.5, cm.jet)
     """
@@ -1798,40 +1807,24 @@ def cmap_map(function,cmap):
     for key in ('red','green','blue'):
         step_dict[key] = map(lambda x: x[0], cdict[key])
     step_list = reduce(lambda x, y: x+y, step_dict.values())
-    step_list = array(list(set(step_list)))
+    step_list = np.array(list(set(step_list)))
+
     # Then compute the LUT, and apply the function to the LUT
-    reduced_cmap = lambda step : array(cmap(step)[0:3])
-    old_LUT = array(map( reduced_cmap, step_list))
-    new_LUT = array(map( function, old_LUT))
+    def reduced_cmap(step):
+        return np.array(cmap(step)[0:3])
+    old_LUT = np.array(map(reduced_cmap, step_list))
+    new_LUT = np.array(map(function, old_LUT))
     # Now try to make a minimal segment definition of the new LUT
     cdict = {}
-    for i,key in enumerate(('red','green','blue')):
+    for i, key in enumerate(('red','green','blue')):
         this_cdict = {}
         for j,step in enumerate(step_list):
             if step in step_dict[key]:
                 this_cdict[step] = new_LUT[j,i]
             elif new_LUT[j,i]!=old_LUT[j,i]:
                 this_cdict[step] = new_LUT[j,i]
-        colorvector=  map(lambda x: x + (x[1], ), this_cdict.items())
+        colorvector = map(lambda x: x + (x[1], ), this_cdict.items())
         colorvector.sort()
         cdict[key] = colorvector
 
     return colors.LinearSegmentedColormap('colormap',cdict,1024)
-
-if __name__ == '__main__':
-    import numpy, pylab
-    a=numpy.outer(numpy.arange(0,1,0.01),numpy.ones(10))
-    pylab.figure(figsize=(10,7))
-    pylab.subplots_adjust(top=0.8,bottom=0.05,left=0.01,right=0.99)
-    maps=[m for m in datad.keys() if not m.endswith("_r")]
-    maps.sort()
-    l=len(maps)+1
-    i=1
-    for m in maps:
-        pylab.subplot(1,l,i)
-        pylab.axis("off")
-        pylab.imshow(a,aspect='auto',cmap=locals()[m],origin="lower")
-        pylab.title(m,rotation=90,fontsize=10)
-        i=i+1
-    pylab.show()
-

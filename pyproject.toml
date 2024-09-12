@@ -1,0 +1,32 @@
+[project]
+name = 'pyHWT'
+description = 'Python Module for HWT Post Processing.'
+authors = [
+    {name = 'Patrick Marsh', email = 'patrick.marsh@noaa.gov'},
+]
+readme = 'README'
+license = {file = 'LICENSE'}
+dynamic = ['version']
+requires-python = '>=3.10'
+dependencies = [
+    'cython',
+    'matplotlib',
+    'numpy'
+]
+
+[build-system]
+requires = ['cython', 'numpy', 'setuptools']
+build-backend = 'setuptools.build_meta'
+
+[project.urls]
+homepage = 'https://github.com/pmarshwx/pyHWT'
+repository = 'https://github.com/pmarshwx/pyHWT'
+
+[tool.setuptools]
+zip-safe = false
+
+[tool.setuptools.dynamic]
+version = {attr = 'hwt.__version__'}
+
+[tool.setuptools.packages.find]
+where = ['src']
