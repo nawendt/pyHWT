@@ -15,6 +15,7 @@ ctypedef np.npy_double DTYPE64_t
 DTYPE32 = np.float32
 ctypedef np.npy_float DTYPE32_t
 
+
 @cython.boundscheck(False)
 def reliability(np.ndarray[DTYPE_t, ndim=2] fcst,
                 np.ndarray[DTYPE_t, ndim=2] obs,
@@ -58,7 +59,6 @@ def reliability(np.ndarray[DTYPE_t, ndim=2] fcst,
     return (fhist, ohist)
 
 
-
 @cython.boundscheck(False)
 @cython.cdivision(True)
 def get_contingency(np.ndarray[DTYPE64_t, ndim=2] fcst,
@@ -95,10 +95,9 @@ def get_contingency(np.ndarray[DTYPE64_t, ndim=2] fcst,
     return (a, b, c, d)
 
 
-
 @cython.boundscheck(False)
 @cython.cdivision(True)
-cdef get_fss_fraction(np.ndarray[DTYPE_t, ndim=2] data, 
+cpdef get_fss_fraction(np.ndarray[DTYPE_t, ndim=2] data, 
                                      unsigned int n):
     
     cdef Py_ssize_t i, j, ii, jj
@@ -131,7 +130,7 @@ cdef get_fss_fraction(np.ndarray[DTYPE_t, ndim=2] data,
 
 @cython.boundscheck(False)
 @cython.cdivision(True)
-cdef get_fss_cfraction(np.ndarray[DTYPE_t, ndim=2] data,
+cpdef get_fss_cfraction(np.ndarray[DTYPE_t, ndim=2] data,
                                        float roi,
                                        float dx):
 
@@ -175,7 +174,119 @@ cdef get_fss_cfraction(np.ndarray[DTYPE_t, ndim=2] data,
 
 @cython.boundscheck(False)
 @cython.cdivision(True)
-cdef get_fss_mse(np.ndarray[DTYPE64_t, ndim = 2] obs, 
+cpdef get_outlook_contingency(np.ndarray[DTYPE64_t, ndim=2] fcst,
+                              np.ndarray[DTYPE64_t, ndim=2] obs,
+                              np.ndarray[DTYPE64_t, ndim=1] bins,
+                              float obsmin,
+                              float roi,
+                              float dx):
+
+    cdef unsigned int xlen = fcst.shape[0]
+    cdef unsigned int ylen = fcst.shape[1]
+    cdef unsigned int ng, found
+    cdef int jw, je, isouth, inorth, n, binsize
+    cdef float rng, distsq, dist
+    cdef Py_ssize_t i, j, ii, jj
+
+    binsize = len(bins)
+    cdef np.ndarray[DTYPE_t, ndim=2] fdig = np.digitize(fcst, bins=bins)
+    cdef np.ndarray[DTYPE_t, ndim=2] table = np.zeros((binsize, 4), dtype=DTYPE)
+    cdef np.ndarray[DTYPE64_t, ndim=2] mask = np.zeros((xlen, ylen), dtype=DTYPE64)
+    cdef np.ndarray[DTYPE64_t, ndim=2] mobs = np.zeros((xlen, ylen), dtype=DTYPE64)
+
+    rng = roi/dx
+    ng = int(rng)
+
+    # exclude 0 as this is outside the defined bin range
+    for bn, b in enumerate(np.unique(fdig)[1:]):
+        mask = circle_expand((fdig >= b) * 1., 1, roi, dx)
+        mobs = (obs >= obsmin) * (1 - mask)
+        for i in range(xlen):
+            isouth = i-ng
+            inorth = i+ng + 1
+            for j in range(ylen):
+                jw = j-ng
+                je = j+ng + 1
+                if fdig[i, j] != b:
+                    continue
+                found = 0
+                for ii in range(isouth, inorth):
+                    if found:
+                        break
+                    for jj in range(jw, je):
+                        if jw < 0 or je >= ylen or isouth < 0 or inorth >= xlen:
+                            continue
+                        distsq = float(j-jj)*float(j-jj)  + float(i-ii)*float(i-ii)
+                        dist = sqrt(distsq)
+                        if dist <= rng:
+                            if obs[ii, jj] >= obsmin:
+                                table[bn, :] += (1, 0, 0, 0)
+                                found = 1
+                                break
+                table[bn, :] += (0, 1, 0, 0)
+        table[bn, :] +=  (0, 0, int(mobs.sum()), 0)
+        table[bn, :] += (0, 0, 0, int(mask.sum() - mobs.sum()))
+
+    return table
+
+
+@cython.boundscheck(False)
+@cython.cdivision(True)
+cpdef get_outlook_reliability(np.ndarray[DTYPE64_t, ndim=2] fcst,
+                              np.ndarray[DTYPE64_t, ndim=2] obs,
+                              np.ndarray[DTYPE64_t, ndim=1] bins,
+                              float obsmin,
+                              float roi,
+                              float dx):
+
+    cdef unsigned int xlen = fcst.shape[0]
+    cdef unsigned int ylen = fcst.shape[1]
+    cdef unsigned int ng, found
+    cdef int jw, je, isouth, inorth, n, binsize
+    cdef float rng, distsq, dist
+    cdef Py_ssize_t i, j, ii, jj
+
+    binsize = len(bins)
+    cdef np.ndarray[DTYPE64_t, ndim=1] hits = np.zeros(binsize, dtype=DTYPE64)
+    cdef np.ndarray[DTYPE_t, ndim=1]  counts = np.zeros(binsize, dtype=DTYPE)
+    cdef np.ndarray[DTYPE_t, ndim=2] fdig = np.digitize(fcst, bins=bins)
+
+    rng = roi/dx
+    ng = int(rng)
+
+    # exclude 0 as this is outside the defined bin range
+    for bn, b in enumerate(np.unique(fdig)[1:]):
+
+        for i in range(xlen):
+            isouth = i-ng
+            inorth = i+ng + 1
+            for j in range(ylen):
+                jw = j-ng
+                je = j+ng + 1
+                if fdig[i, j] != b:
+                    continue
+                found = 0
+                counts[bn] += 1
+                for ii in range(isouth, inorth):
+                    if found:
+                        break
+                    for jj in range(jw, je):
+                        if jw < 0 or je >= ylen or isouth < 0 or inorth >= xlen:
+                            continue
+                        distsq = float(j-jj)*float(j-jj)  + float(i-ii)*float(i-ii)
+                        dist = sqrt(distsq)
+                        if dist <= rng:
+                            if obs[ii, jj] >= obsmin:
+                                hits[bn] += 1
+                                found = 1
+                                break
+
+    return (hits, counts)
+
+
+@cython.boundscheck(False)
+@cython.cdivision(True)
+cpdef get_fss_mse(np.ndarray[DTYPE64_t, ndim = 2] obs, 
                                np.ndarray[DTYPE64_t, ndim = 2] fcst):
 
     cdef Py_ssize_t i, j
@@ -197,10 +308,9 @@ cdef get_fss_mse(np.ndarray[DTYPE64_t, ndim = 2] obs,
     return mse
 
 
-
 @cython.boundscheck(False)
 @cython.cdivision(True)
-cdef get_fss_ref(np.ndarray[DTYPE64_t, ndim = 2] obs, 
+cpdef get_fss_ref(np.ndarray[DTYPE64_t, ndim = 2] obs, 
                              np.ndarray[DTYPE64_t, ndim = 2] fcst):
 
     cdef Py_ssize_t i, j
@@ -220,7 +330,6 @@ cdef get_fss_ref(np.ndarray[DTYPE64_t, ndim = 2] obs,
     ref = ref/(nx*ny)
 
     return ref
-
 
 
 def fss(obs, fcst, r = None, dx = None, neighborhood = None):
