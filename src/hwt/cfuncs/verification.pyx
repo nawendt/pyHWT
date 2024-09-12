@@ -7,7 +7,6 @@ from .neighborhood import circle_expand
 cdef extern from 'math.h':
     float sqrt(float x)
 
-
 DTYPE = np.int32
 ctypedef np.npy_int DTYPE_t
 
