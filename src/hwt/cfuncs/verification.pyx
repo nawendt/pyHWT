@@ -2,6 +2,8 @@ cimport cython
 import numpy as np
 cimport numpy as np
 
+from .neighborhood import circle_expand
+
 cdef extern from 'math.h':
     float sqrt(float x)
 
