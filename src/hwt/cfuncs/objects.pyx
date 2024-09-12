@@ -2,7 +2,7 @@ cimport cython
 import numpy as np
 cimport numpy as np
 
-DTYPE = np.int
+DTYPE = np.int32
 DTYPE32 = np.float32
 DTYPE64 = np.float64
 ctypedef np.npy_int DTYPE_t

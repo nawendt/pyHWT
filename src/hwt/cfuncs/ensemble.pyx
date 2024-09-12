@@ -6,7 +6,7 @@ cimport numpy as np
 cdef extern from 'math.h':
     float exp(float x)
 
-DTYPE = np.int
+DTYPE = np.int32
 DTYPE32 = np.float32
 DTYPE64 = np.float64
 ctypedef np.npy_int DTYPE_t

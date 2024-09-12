@@ -6,7 +6,7 @@ cimport numpy as np
 cdef extern from 'math.h':
     float fabs(float x)
 
-DTYPE = np.int
+DTYPE = np.int32
 ctypedef np.npy_int DTYPE_t
 
 DTYPE32 = np.float32

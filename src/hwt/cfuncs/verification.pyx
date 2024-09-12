@@ -6,7 +6,7 @@ cdef extern from 'math.h':
     float sqrt(float x)
 
 
-DTYPE = np.int
+DTYPE = np.int32
 ctypedef np.npy_int DTYPE_t
 
 DTYPE64 = np.float64
